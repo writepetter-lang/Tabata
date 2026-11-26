@@ -7,65 +7,85 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Inter:wght@400;600&display=swap">
 <style>
-/* One-screen app: settings card at rest, full-bleed phase color while running. */
+/* One-screen app: slider settings at rest; full-bleed phase color while running, amber flash before each change. */
 :root{
   --bg:#f3f4f2; --fg:#16181a; --muted:#5d6468; --card:#ffffff; --line:#dde0dd;
-  --work:#e2431e; --rest:#1f8a70; --done:#2b4fd8; --on-phase:#ffffff;
+  --work:#d7263d; --rest:#1f8a70; --warn:#ff9f0a; --done:#2b4fd8; --on-phase:#ffffff; --on-warn:#1d1300;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:Inter,system-ui,-apple-system,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+@media (prefers-color-scheme:dark){:root{
   --bg:#111314; --fg:#eef0ee; --muted:#9aa2a6; --card:#1b1e20; --line:#2c3134;
-  --work:#d93c18; --rest:#1a7a63; --done:#3456d6; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#111314; --fg:#eef0ee; --muted:#9aa2a6; --card:#1b1e20; --line:#2c3134;
-  --work:#d93c18; --rest:#1a7a63; --done:#3456d6; color-scheme:dark}
+  --work:#c8213a; --rest:#1a7a63; --done:#3456d6; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  -webkit-tap-highlight-color:transparent;user-select:none;transition:background .25s}
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:background-color .2s}
 body.work{background:var(--work)} body.rest{background:var(--rest)} body.done{background:var(--done)}
-body.work,body.rest,body.done{color:var(--on-phase)}
-.app{max-width:420px;margin:0 auto;height:100%;display:flex;flex-direction:column;justify-content:center;gap:20px;padding-block:16px}
+body.work,body.rest,body.done{color:var(--on-phase);--track:rgba(255,255,255,.25);--fill:rgba(255,255,255,.95);--btn:rgba(255,255,255,.18);--btnline:rgba(255,255,255,.5)}
+body.warn{background:var(--warn);color:var(--on-warn);--track:rgba(0,0,0,.15);--fill:rgba(0,0,0,.8);--btn:rgba(0,0,0,.1);--btnline:rgba(0,0,0,.35)}
+.app{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:20px;
+  padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
 h1{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:.02em;text-transform:uppercase;margin:0}
+
+/* settings */
 .setup{display:flex;flex-direction:column;gap:12px}
-.row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 18px}
-.row label{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.row label b{display:block;width:10px;height:10px;border-radius:50%;margin-bottom:6px}
-.step{display:flex;align-items:center;gap:6px}
-.step button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:1.6rem;line-height:1;cursor:pointer}
-.step input{width:72px;text-align:center;font-family:var(--display);font-weight:800;font-size:2.2rem;border:0;background:transparent;color:var(--fg);font-variant-numeric:tabular-nums;padding:0}
-.step input:focus{outline:2px solid var(--fg);border-radius:8px}
-.unit{font-size:.75rem;color:var(--muted);width:22px}
+.field{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px 18px;display:flex;flex-direction:column;gap:10px}
+.head{display:flex;align-items:baseline;justify-content:space-between}
+.head label{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.head label b{width:10px;height:10px;border-radius:50%}
+.head output{font-family:var(--display);font-weight:800;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;margin:0;--c:var(--fg)}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:5px;background:linear-gradient(to right,var(--c) var(--p,50%),var(--line) var(--p,50%))}
+input[type=range]::-moz-range-track{height:10px;border-radius:5px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:10px;border-radius:5px;background:var(--c)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;margin-top:-12px;border-radius:50%;background:var(--card);border:3px solid var(--c);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:var(--card);border:3px solid var(--c)}
+input[type=range]:focus-visible{outline:2px solid var(--fg);outline-offset:4px;border-radius:8px}
+#work{--c:var(--work)} #rest{--c:var(--rest)}
 .total{color:var(--muted);font-size:.9rem;text-align:center;font-variant-numeric:tabular-nums}
 .go{height:72px;border:0;border-radius:16px;font-family:var(--display);font-weight:800;font-size:1.8rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .go.start{background:var(--work);color:var(--on-phase)}
 button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
-.run{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+
+/* running */
+.run{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .phase{font-family:var(--display);font-weight:800;font-size:2.6rem;letter-spacing:.1em;text-transform:uppercase}
 .count{font-family:var(--display);font-weight:800;font-size:min(48vw,13rem);line-height:.9;font-variant-numeric:tabular-nums}
-.sets{font-size:1.1rem;font-weight:600;opacity:.9;font-variant-numeric:tabular-nums}
-.bar{width:100%;height:8px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:12px}
-.bar i{display:block;height:100%;background:rgba(255,255,255,.9);width:0}
+.setinfo{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.setlabel{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.setlabel .big{font-size:2rem;font-variant-numeric:tabular-nums}
+.setlabel .left{font-size:1.2rem;opacity:.85}
+.segs{display:flex;gap:5px;width:100%;height:22px}
+.segs i{flex:1;min-width:0;border-radius:5px;background:var(--track);overflow:hidden;position:relative}
+.segs i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--f,0%);background:var(--fill)}
+.segs.many{height:16px;gap:3px}
 .ctrl{display:flex;gap:12px}
-.ctrl button{flex:1;background:rgba(255,255,255,.18);color:var(--on-phase);border:2px solid rgba(255,255,255,.5)}
-.ctrl .pause{background:var(--on-phase);color:#16181a;border-color:var(--on-phase)}
-</style>
-<style>body{margin:0}.app{padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
-*{box-sizing:border-box}[hidden]{display:none!important}
+.ctrl button{flex:1;background:var(--btn);color:inherit;border:2px solid var(--btnline)}
+.ctrl .pause{background:var(--fill);color:var(--bg);border-color:transparent}
+body.work .ctrl .pause,body.rest .ctrl .pause,body.done .ctrl .pause{color:#16181a}
+body.warn .ctrl .pause{color:var(--warn)}
+@media (prefers-reduced-motion:reduce){body{transition:none}}
 </style>
 </head>
 <body>
-
 <div class="app">
   <section class="setup" id="setup">
     <h1>Interval Timer</h1>
-    <div class="row"><label for="work"><b style="background:var(--work)"></b>Work</label>
-      <div class="step"><button data-t="work" data-d="-5" aria-label="Less work">−</button><input id="work" type="number" inputmode="numeric" min="1" value="20"><button data-t="work" data-d="5" aria-label="More work">+</button><span class="unit">sec</span></div></div>
-    <div class="row"><label for="rest"><b style="background:var(--rest)"></b>Rest</label>
-      <div class="step"><button data-t="rest" data-d="-5" aria-label="Less rest">−</button><input id="rest" type="number" inputmode="numeric" min="0" value="10"><button data-t="rest" data-d="5" aria-label="More rest">+</button><span class="unit">sec</span></div></div>
-    <div class="row"><label for="sets"><b style="background:var(--fg)"></b>Sets</label>
-      <div class="step"><button data-t="sets" data-d="-1" aria-label="Fewer sets">−</button><input id="sets" type="number" inputmode="numeric" min="1" value="8"><button data-t="sets" data-d="1" aria-label="More sets">+</button><span class="unit"></span></div></div>
+    <div class="field">
+      <div class="head"><label for="work"><b style="background:var(--work)"></b>Work</label><output id="workv" for="work"></output></div>
+      <input id="work" type="range" min="5" max="300" step="5" value="60">
+    </div>
+    <div class="field">
+      <div class="head"><label for="rest"><b style="background:var(--rest)"></b>Rest</label><output id="restv" for="rest"></output></div>
+      <input id="rest" type="range" min="0" max="180" step="5" value="30">
+    </div>
+    <div class="field">
+      <div class="head"><label for="sets"><b style="background:var(--fg)"></b>Sets</label><output id="setsv" for="sets"></output></div>
+      <input id="sets" type="range" min="1" max="30" step="1" value="8">
+    </div>
     <div class="total" id="total"></div>
     <button class="go start" id="start">Start</button>
   </section>
@@ -73,8 +93,10 @@ button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
   <section class="run" id="run" hidden>
     <div class="phase" id="phase">Get ready</div>
     <div class="count" id="count">5</div>
-    <div class="sets" id="setlabel">Set 1 of 8</div>
-    <div class="bar"><i id="bar"></i></div>
+    <div class="setinfo">
+      <div class="setlabel"><span class="big" id="setnum">Set 1 / 8</span><span class="left" id="setleft"></span></div>
+      <div class="segs" id="segs"></div>
+    </div>
   </section>
   <div class="ctrl" id="ctrl" hidden>
     <button class="go" id="reset">Stop</button>
@@ -86,43 +108,55 @@ button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 const $=id=>document.getElementById(id);
 const F={work:$('work'),rest:$('rest'),sets:$('sets')};
 const PREP=5;
-try{const s=JSON.parse(localStorage.getItem('itimer')||'null');if(s)for(const k in F)if(s[k]!=null)F[k].value=s[k]}catch(e){}
-const val=k=>Math.max(k==='rest'?0:1,parseInt(F[k].value)||0);
-function fmt(s){s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):String(s)}
-function total(){const t=val('sets')*val('work')+(val('sets')-1)*val('rest');$('total').textContent='Total '+fmt(t)+(t>=60?' min':' sec');
-  try{localStorage.setItem('itimer',JSON.stringify({work:val('work'),rest:val('rest'),sets:val('sets')}))}catch(e){}}
-document.querySelectorAll('.step button').forEach(b=>b.onclick=()=>{const k=b.dataset.t;F[k].value=val(k)+ +b.dataset.d;F[k].value=val(k);total()});
-Object.values(F).forEach(i=>i.oninput=total);total();
+try{const s=JSON.parse(localStorage.getItem('itimer2')||'null');if(s)for(const k in F)if(s[k]!=null)F[k].value=s[k]}catch(e){}
+const val=k=>parseInt(F[k].value)||0;
+const fmt=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):String(s)};
+const fmtSet=s=>s<60?s+'s':Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function sync(){
+  for(const k in F){const i=F[k];i.style.setProperty('--p',(100*(i.value-i.min)/(i.max-i.min))+'%')}
+  $('workv').textContent=fmtSet(val('work'));$('restv').textContent=val('rest')?fmtSet(val('rest')):'None';$('setsv').textContent=val('sets');
+  const t=val('sets')*val('work')+(val('sets')-1)*val('rest');$('total').textContent='Total '+fmt(t)+(t>=60?' min':' sec');
+  try{localStorage.setItem('itimer2',JSON.stringify({work:val('work'),rest:val('rest'),sets:val('sets')}))}catch(e){}}
+Object.values(F).forEach(i=>i.addEventListener('input',sync));sync();
 
-// audio
+// audio + wake lock
 let ac;function beep(f=880,d=.12,v=.4){if(!ac)return;const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='square';
   g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}
 let wl;async function wake(){try{wl=await navigator.wakeLock?.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(plan&&!paused&&document.visibilityState==='visible')wake()});
 
-// plan = list of segments; time is wall-clock based so it never drifts
-let plan=null,idx=0,segEnd=0,paused=false,left=0,raf,lastSec=-1;
-function build(){const p=[{k:'ready',d:PREP}];const n=val('sets');
+// plan = list of segments; wall-clock based so it never drifts
+let plan=null,idx=0,segEnd=0,paused=false,left=0,raf,lastSec=-1,segEls=[];
+function build(){const p=[{k:'ready',d:PREP,s:1}],n=val('sets');
   for(let i=1;i<=n;i++){p.push({k:'work',d:val('work'),s:i});if(i<n&&val('rest')>0)p.push({k:'rest',d:val('rest'),s:i})}return p}
+const warnFor=d=>d>=15?5:3; // amber lead-in: 5s on longer segments, 3s on short ones
+const label=k=>k==='ready'?'Get ready':k==='work'?'Work':'Rest';
+function drawSegs(){const n=val('sets');$('segs').innerHTML='<i></i>'.repeat(n);$('segs').classList.toggle('many',n>15);segEls=[...$('segs').children]}
 function enter(i){idx=i;const seg=plan[i];segEnd=performance.now()+seg.d*1000;lastSec=-1;
-  document.body.className=seg.k==='ready'?'rest':seg.k;
-  $('phase').textContent=seg.k==='ready'?'Get ready':seg.k==='work'?'Work':'Rest';
-  $('setlabel').textContent=(seg.k==='ready'?'Set 1':'Set '+seg.s)+' of '+val('sets');
+  $('phase').textContent=label(seg.k);
   if(seg.k==='work')beep(1320,.35,.5);else if(seg.k==='rest')beep(520,.35,.5)}
+function setProgress(seg,rem){
+  const n=val('sets'),w=val('work'),r=seg.s<n?val('rest'):0;
+  let f=0;if(seg.k==='work')f=(w-rem)/(w+r);else if(seg.k==='rest')f=(w+r-rem)/(w+r);
+  segEls.forEach((el,j)=>el.style.setProperty('--f',(j+1<seg.s?100:j+1===seg.s?Math.min(100,f*100):0)+'%'));
+  $('setnum').textContent='Set '+seg.s+' / '+n;
+  const l=n-seg.s;$('setleft').textContent=l?l+' left':'Last set'}
 function tick(){const now=performance.now();let rem=(segEnd-now)/1000;
   if(rem<=0){if(idx+1<plan.length){enter(idx+1);rem=plan[idx].d}else return finish()}
-  const seg=plan[idx],sec=Math.ceil(rem);$('count').textContent=fmt(rem);
-  $('bar').style.width=(100*(1-rem/seg.d))+'%';
+  const seg=plan[idx],sec=Math.ceil(rem),hasNext=idx+1<plan.length;
+  document.body.className=(hasNext&&rem<=warnFor(seg.d))?'warn':(seg.k==='ready'?'rest':seg.k);
+  $('count').textContent=fmt(rem);setProgress(seg,rem);
   if(sec!==lastSec){if(sec<=3&&sec>0&&lastSec!==-1)beep(880);lastSec=sec}
   raf=requestAnimationFrame(tick)}
 function finish(){cancelAnimationFrame(raf);document.body.className='done';$('phase').textContent='Done';$('count').textContent='✓';
-  $('setlabel').textContent=val('sets')+' sets complete';$('bar').style.width='100%';$('pause').hidden=true;$('reset').textContent='Back';
+  segEls.forEach(el=>el.style.setProperty('--f','100%'));$('setnum').textContent=val('sets')+' / '+val('sets');$('setleft').textContent='Complete';
+  $('pause').hidden=true;$('reset').textContent='Back';
   beep(1320,.2);setTimeout(()=>beep(1320,.2),250);setTimeout(()=>beep(1760,.5),500);plan=null;wl?.release?.()}
 $('start').onclick=()=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}
-  plan=build();paused=false;$('setup').hidden=true;$('run').hidden=false;$('ctrl').hidden=false;$('pause').hidden=false;
+  plan=build();paused=false;drawSegs();$('setup').hidden=true;$('run').hidden=false;$('ctrl').hidden=false;$('pause').hidden=false;
   $('pause').textContent='Pause';$('reset').textContent='Stop';wake();enter(0);tick()};
 $('pause').onclick=()=>{if(!plan)return;if(!paused){paused=true;left=segEnd-performance.now();cancelAnimationFrame(raf);$('pause').textContent='Resume';$('phase').textContent='Paused'}
-  else{paused=false;segEnd=performance.now()+left;$('pause').textContent='Pause';$('phase').textContent=plan[idx].k==='ready'?'Get ready':plan[idx].k==='work'?'Work':'Rest';tick()}};
+  else{paused=false;segEnd=performance.now()+left;$('pause').textContent='Pause';$('phase').textContent=label(plan[idx].k);tick()}};
 $('reset').onclick=()=>{cancelAnimationFrame(raf);plan=null;document.body.className='';$('setup').hidden=false;$('run').hidden=true;$('ctrl').hidden=true;wl?.release?.()};
 </script>
 </body>
