@@ -67,6 +67,22 @@ button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 .ctrl .pause{background:var(--fill);color:var(--bg);border-color:transparent}
 body.work .ctrl .pause,body.rest .ctrl .pause,body.done .ctrl .pause{color:#16181a}
 body.warn .ctrl .pause{color:var(--warn)}
+/* saved workouts */
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:stretch;border:1px solid var(--line);background:var(--card);border-radius:999px;overflow:hidden;max-width:100%}
+.chip button{border:0;background:transparent;color:var(--fg);font:600 .95rem var(--body);cursor:pointer;min-height:44px}
+.chip .load{padding:0 6px 0 16px;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip .load small{display:block;font-weight:400;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip .del{padding:0 14px 0 8px;color:var(--muted);font-size:1.1rem}
+.chip.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.chip.confirm{background:var(--work);border-color:var(--work)}
+.chip.confirm button,.chip.confirm small{color:#fff}
+.saverow{display:flex;gap:8px}
+.saverow input{flex:1;min-width:0;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:16px var(--body);padding:0 14px}
+.saverow button,.savebtn{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:600 .95rem var(--body);padding:0 16px;cursor:pointer}
+.saverow .ok{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.savebtn{align-self:flex-start}
+.runname{font-size:1rem;font-weight:600;opacity:.85;min-height:1.2em}
 @media (prefers-reduced-motion:reduce){body{transition:none}}
 </style>
 </head>
@@ -74,6 +90,7 @@ body.warn .ctrl .pause{color:var(--warn)}
 <div class="app">
   <section class="setup" id="setup">
     <h1>Interval Timer</h1>
+    <div class="presets" id="presets"></div>
     <div class="field">
       <div class="head"><label for="work"><b style="background:var(--work)"></b>Work</label><output id="workv" for="work"></output></div>
       <input id="work" type="range" min="5" max="300" step="5" value="60">
@@ -87,10 +104,17 @@ body.warn .ctrl .pause{color:var(--warn)}
       <input id="sets" type="range" min="1" max="30" step="1" value="8">
     </div>
     <div class="total" id="total"></div>
+    <button class="savebtn" id="saveopen">Save as workout</button>
+    <form class="saverow" id="saverow" hidden>
+      <input id="savename" type="text" maxlength="30" placeholder="Name, e.g. Hill sprints" autocomplete="off" enterkeyhint="done">
+      <button type="button" id="savecancel">Cancel</button>
+      <button type="submit" class="ok">Save</button>
+    </form>
     <button class="go start" id="start">Start</button>
   </section>
 
   <section class="run" id="run" hidden>
+    <div class="runname" id="runname"></div>
     <div class="phase" id="phase">Get ready</div>
     <div class="count" id="count">5</div>
     <div class="setinfo">
@@ -117,7 +141,30 @@ function sync(){
   $('workv').textContent=fmtSet(val('work'));$('restv').textContent=val('rest')?fmtSet(val('rest')):'None';$('setsv').textContent=val('sets');
   const t=val('sets')*val('work')+(val('sets')-1)*val('rest');$('total').textContent='Total '+fmt(t)+(t>=60?' min':' sec');
   try{localStorage.setItem('itimer2',JSON.stringify({work:val('work'),rest:val('rest'),sets:val('sets')}))}catch(e){}}
-Object.values(F).forEach(i=>i.addEventListener('input',sync));sync();
+Object.values(F).forEach(i=>i.addEventListener('input',()=>{sync();drawPresets()}));sync();
+
+// saved workouts (stored on this device)
+let presets=[];try{presets=JSON.parse(localStorage.getItem('itimer-presets')||'[]')}catch(e){}
+const storeP=()=>{try{localStorage.setItem('itimer-presets',JSON.stringify(presets))}catch(e){}};
+const cur=()=>({work:val('work'),rest:val('rest'),sets:val('sets')});
+const same=(p,c=cur())=>p.work===c.work&&p.rest===c.rest&&p.sets===c.sets;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let confirmIdx=-1;
+function drawPresets(){
+  $('presets').innerHTML=presets.map((p,i)=>`<div class="chip${same(p)?' on':''}${confirmIdx===i?' confirm':''}">
+    <button class="load" data-i="${i}">${confirmIdx===i?'Delete?':esc(p.name)}<small>${p.sets}× ${fmtSet(p.work)} / ${p.rest?fmtSet(p.rest):'no rest'}</small></button>
+    <button class="del" data-i="${i}" aria-label="Delete ${esc(p.name)}">${confirmIdx===i?'✓':'×'}</button></div>`).join('')}
+$('presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;
+  if(b.classList.contains('del')){if(confirmIdx===i){presets.splice(i,1);storeP();confirmIdx=-1}else confirmIdx=i}
+  else{if(confirmIdx===i){confirmIdx=-1}else{confirmIdx=-1;const p=presets[i];for(const k in F)F[k].value=p[k];sync()}}
+  drawPresets()};
+$('saveopen').onclick=()=>{$('saveopen').hidden=true;$('saverow').hidden=false;const m=presets.find(p=>same(p));$('savename').value=m?m.name:'';$('savename').focus()};
+const closeSave=()=>{$('saverow').hidden=true;$('saveopen').hidden=false};
+$('savecancel').onclick=closeSave;
+$('saverow').onsubmit=e=>{e.preventDefault();const name=$('savename').value.trim();if(!name){$('savename').focus();return}
+  const p={name,...cur()},j=presets.findIndex(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(j>=0)presets[j]=p;else presets.push(p);storeP();closeSave();drawPresets()};
+drawPresets();
 
 // audio + wake lock
 let ac;function beep(f=880,d=.12,v=.4){if(!ac)return;const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='square';
@@ -153,7 +200,7 @@ function finish(){cancelAnimationFrame(raf);document.body.className='done';$('ph
   $('pause').hidden=true;$('reset').textContent='Back';
   beep(1320,.2);setTimeout(()=>beep(1320,.2),250);setTimeout(()=>beep(1760,.5),500);plan=null;wl?.release?.()}
 $('start').onclick=()=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}
-  plan=build();paused=false;drawSegs();$('setup').hidden=true;$('run').hidden=false;$('ctrl').hidden=false;$('pause').hidden=false;
+  plan=build();paused=false;drawSegs();const m=presets.find(p=>same(p));$('runname').textContent=m?m.name:'';$('setup').hidden=true;$('run').hidden=false;$('ctrl').hidden=false;$('pause').hidden=false;
   $('pause').textContent='Pause';$('reset').textContent='Stop';wake();enter(0);tick()};
 $('pause').onclick=()=>{if(!plan)return;if(!paused){paused=true;left=segEnd-performance.now();cancelAnimationFrame(raf);$('pause').textContent='Resume';$('phase').textContent='Paused'}
   else{paused=false;segEnd=performance.now()+left;$('pause').textContent='Pause';$('phase').textContent=label(plan[idx].k);tick()}};
